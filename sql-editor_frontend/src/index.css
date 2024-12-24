@@ -1,0 +1,13 @@
+/* Ensure the body and html fill the full height */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+/* The root container ensures content and footer alignment */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Full viewport height */
+}

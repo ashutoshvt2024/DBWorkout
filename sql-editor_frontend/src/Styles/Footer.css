@@ -1,0 +1,27 @@
+/* Footer.css */
+
+/* Footer container */
+.footer {
+    background-color: #34495e; /* Dark gray background */
+    color: #ecf0f1; /* Light gray text */
+    text-align: center;
+    padding: 1rem 0;
+    font-size: 0.9rem;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+  
+    /* Sticky positioning */
+    margin-top: auto; /* Pushes footer to the bottom if content is short */
+  }
+  
+  /* Footer links */
+  .footer a {
+    color: #1abc9c; /* Aqua link color */
+    text-decoration: none;
+    margin: 0 5px;
+    font-weight: 500;
+  }
+  
+  .footer a:hover {
+    color: #16a085; /* Darker aqua on hover */
+    text-decoration: underline;
+  }

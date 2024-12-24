@@ -1,0 +1,42 @@
+/* Reset margin and padding for consistency */
+
+/* Workspace Layout */
+.workspace {
+  display: flex;
+
+}
+
+/* Editor Container */
+.editor-container {
+  flex: 1; /* Takes the remaining space */
+  overflow: hidden; /* Avoid unnecessary scrollbars */
+  position: relative; /* Ensure alignment calculations */
+ 
+}
+.editor-container h2{
+    color: #333;
+}
+.sql-statement-container{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 10px;
+  background-color: rgb(231, 233, 233);
+  padding-left: 20px;
+  margin-bottom:10px ;
+  height: 60px;
+}
+.editor{
+  padding-top: 10px;
+  border-top: 2px solid rgb(139, 31, 65);
+  border-bottom: 2px solid rgb(139, 31, 65);
+}
+.result-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 10px;
+  background-color: rgb(231, 233, 233);
+  padding-left: 20px;
+  height: 60px;
+}
