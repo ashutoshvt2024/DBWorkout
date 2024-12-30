@@ -1,4 +1,4 @@
-#!/Users/ashutosh/Desktop/sql_editor_backend/env/bin/python
+#!/Users/ashutosh/Desktop/SQL_Collaborative_Editor/backend/env/bin/python3.13
 # -*- coding: utf-8 -*-
 import re
 import sys
