@@ -39,5 +39,11 @@ export const SidebarData = [
     path: '/support',
     icon: <IoIcons.IoMdHelpCircle />,
     cName: 'nav-text'
+  },
+  {
+    title: 'Instructor Panel',
+    path: '/instructor-panel',
+    icon: <FaIcons.FaChalkboardTeacher />,
+    cName: 'nav-text'
   }
 ];

@@ -1,0 +1,128 @@
+/* General Layout */
+.task-management {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.task-management h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.task-form,
+.task-list {
+  margin-bottom: 30px;
+}
+
+/* Task Form */
+.task-form input,
+.task-form textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.task-form button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.task-form button:hover {
+  background-color: #45a049;
+}
+
+/* Task Table */
+.task-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.task-table th,
+.task-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+
+.task-table th {
+  background-color: #f4f4f4;
+  color: #333;
+  font-weight: bold;
+}
+
+.task-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.task-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+.task-table button {
+  padding: 5px 10px;
+  margin: 0 5px;
+  font-size: 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.task-table button:first-child {
+  background-color: #ffc107;
+  color: white;
+}
+
+.task-table button:first-child:hover {
+  background-color: #e0a800;
+}
+
+.task-table button:last-child {
+  background-color: #f44336;
+  color: white;
+}
+
+.task-table button:last-child:hover {
+  background-color: #d32f2f;
+}
+
+/* Message */
+.message {
+  text-align: center;
+  color: #333;
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+/* Buttons */
+.task-list button {
+  display: inline-block;
+  margin: 10px 0;
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.task-list button:hover {
+  background-color: #0056b3;
+}

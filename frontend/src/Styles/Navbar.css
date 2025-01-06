@@ -10,6 +10,7 @@
   margin-left: 2rem;
   font-size: 2rem;
   background: none;
+  background-color: rgb(139, 31, 65);
 }
 
 .nav-menu {
@@ -29,34 +30,12 @@
   transition: 350ms;
 }
 
-.nav-text {
-  display: flex;
-  justify-content: start;
-  align-items: center;
-  padding: 3px 0px 3px 6px;
-  list-style: none;
-  height: 60px;
-}
-
-.nav-text a {
-  text-decoration: none;
-  color: #f5f5f5;
-  font-size: 18px;
-  width: 95%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  border-radius: 4px;
-}
-
-.nav-text a:hover {
-  background-color: rgb(86, 1, 28);
-  
-}
-
 .nav-menu-items {
   width: 100%;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  background-color: rgb(139, 31, 65);
 }
 
 .navbar-toggle {
@@ -68,6 +47,47 @@
   align-items: center;
 }
 
+.nav-text {
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  padding: 5px 10px;
+  list-style: none;
+  height: 60px;
+  transition: background-color 0.3s ease;
+  background-color: rgb(139, 31, 65);
+  border: none;
+}
+
+.nav-text a {
+  text-decoration: none;
+  color: #ffffff; /* Text color for links */
+  font-size: 18px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-radius: 8px; /* Rounded corners for nav items */
+  background-color: rgb(139, 31, 65); /* Default background color */
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.nav-text a:hover {
+  background-color: rgb(186, 52, 92); /* Lighter hover background */
+  color: #ffffff;
+}
+
+.nav-text.active {
+  background-color: rgb(186, 52, 92); /* Highlight the active link */
+  color: #ffffff;
+}
+
 span {
   margin-left: 16px;
+}
+
+/* Add hover effect to the navbar toggle close button */
+.navbar-toggle .menu-bars:hover {
+  color: #ffffff;
 }

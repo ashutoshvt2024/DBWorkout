@@ -8,6 +8,7 @@ import Login from './components/Login';
 import Workspace from './components/Workspace';
 import './App.css';
 import Navbar from './components/Navbar';
+import InstructorPanel from './components/InstructorPanel';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/workspace" element={<Workspace />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/instructor-panel" element={<InstructorPanel />} />
           </Routes>
         </main>
         
