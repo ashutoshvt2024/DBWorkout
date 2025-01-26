@@ -4,7 +4,7 @@
 # Project Name
 
 ## Introduction
-[Brief description of your project.]
+Our platform gamifies SQL learning, turning it into an engaging, interactive experience. Students practice SQL commands in real-time, track progress on a leaderboard, and receive instant feedback. This fosters motivation, collaboration, and skill development by giving instructors insights into performance, preparing students for technical careers
 
 ## Prerequisites
 Ensure you have the following installed on your system:
