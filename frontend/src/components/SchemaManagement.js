@@ -8,6 +8,8 @@ function SchemaManagement() {
   const [schemas, setSchemas] = useState([]);
   const [newSchemaName, setNewSchemaName] = useState("");
   const [message, setMessage] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [schemaToDelete, setSchemaToDelete] = useState("");
 
   // Fetch schemas from backend
   const fetchSchemas = async () => {
@@ -38,15 +40,29 @@ function SchemaManagement() {
     }
   };
 
+  // Confirm deletion of a schema
+  const confirmDeleteSchema = (schema) => {
+    setSchemaToDelete(schema);
+    setShowConfirm(true);
+  };
+
   // Delete a schema
-  const handleDeleteSchema = async (schemaName) => {
+  const handleDeleteSchema = async () => {
     try {
-      await axios.delete(`http://127.0.0.1:5000/schemas/${schemaName}`);
+      await axios.delete(`http://127.0.0.1:5000/schemas/${schemaToDelete}`);
       setMessage("Schema deleted successfully.");
+      setShowConfirm(false);
+      setSchemaToDelete("");
       fetchSchemas(); // Refresh schema list
     } catch (error) {
       setMessage(`Error deleting schema: ${error.response?.data?.error || error.message}`);
+      setShowConfirm(false);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirm(false);
+    setSchemaToDelete("");
   };
 
   useEffect(() => {
@@ -105,7 +121,7 @@ function SchemaManagement() {
                     <tr key={schema}>
                       <td>{schema}</td>
                       <td>
-                        <button onClick={() => handleDeleteSchema(schema)}>Delete</button>
+                        <button onClick={() => confirmDeleteSchema(schema)}>Delete</button>
                       </td>
                     </tr>
                   ))}
@@ -119,6 +135,24 @@ function SchemaManagement() {
       ) : (
         <div className="tab-content">
           <TableManagement />
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {showConfirm && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h4>Are you sure you want to delete this schema?</h4>
+            <p>Schema: {schemaToDelete}</p>
+            <div className="modal-actions">
+              <button className="btn-danger" onClick={handleDeleteSchema}>
+                Delete
+              </button>
+              <button className="btn-secondary" onClick={cancelDelete}>
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

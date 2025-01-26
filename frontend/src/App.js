@@ -1,33 +1,60 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import Dashboard from './components/Dashboard';
-import Leaderboard from './components/Leaderboard';
-import Login from './components/Login';
-import Workspace from './components/Workspace';
-import './App.css';
-import Navbar from './components/Navbar';
-import InstructorPanel from './components/InstructorPanel';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Dashboard from "./components/Dashboard";
+import Leaderboard from "./components/Leaderboard";
+import Login from "./components/Login";
+import Workspace from "./components/Workspace";
+import InstructorPanel from "./components/InstructorPanel";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Unauthorized from "./components/Unauthorized";
+import { UserProvider } from "./context/UserContext";
 
 function App() {
   return (
-    <div id="root">
+    <UserProvider>
       <Router>
-        {/* Navbar is outside the Routes */}
         <Navbar />
         <main className="container flex-fill">
           <Routes>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/workspace" element={<Workspace />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/instructor-panel" element={<InstructorPanel />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute roles={["professor", "student"]}>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/leaderboard"
+              element={
+                <ProtectedRoute roles={["student"]}>
+                  <Leaderboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workspace"
+              element={
+                <ProtectedRoute roles={["professor", "student"]}>
+                  <Workspace />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/instructor-panel"
+              element={
+                <ProtectedRoute roles={["professor"]}>
+                  <InstructorPanel />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/unauthorized" element={<Unauthorized />} />
           </Routes>
         </main>
-        
       </Router>
-    </div>
+    </UserProvider>
   );
 }
 

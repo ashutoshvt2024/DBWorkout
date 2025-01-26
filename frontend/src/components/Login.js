@@ -1,42 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "../services/api";
+import { useUser } from "../context/UserContext";
+import {jwtDecode} from "jwt-decode";
+import "../Styles/Auth.css";
 
 function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const { setUser } = useUser();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log('Logging in with:', email, password);
+    try {
+      const response = await axios.post("/login", { email, password });
+
+      const token = response.data.access_token;
+      localStorage.setItem("token", token);
+      const decoded = jwtDecode(token);
+
+      // Extract and save user data
+      const userData = {
+        userId: decoded.sub.user_id,
+        role: decoded.sub.role,
+      };
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
+
+      navigate(userData.role === "professor" ? "/instructor-panel" : "/dashboard");
+    } catch (err) {
+      setError(err.response?.data?.error || "Login failed");
+    }
   };
 
   return (
-    <div className="container">
+    <div className="auth-container">
       <h1>Login</h1>
+      {error && <p className="error">{error}</p>}
       <form onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label htmlFor="email" className="form-label">Email address</label>
-          <input
-            type="email"
-            className="form-control"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <label htmlFor="password" className="form-label">Password</label>
-          <input
-            type="password"
-            className="form-control"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        <button type="submit" className="btn btn-primary">Login</button>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <button type="submit">Login</button>
       </form>
     </div>
   );

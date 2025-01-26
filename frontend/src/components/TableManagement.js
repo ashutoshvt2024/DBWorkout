@@ -3,6 +3,7 @@ import axios from "axios";
 import "../Styles/TableManagement.css";
 
 function TableManagement() {
+  const [schemas, setSchemas] = useState([]);
   const [schemaName, setSchemaName] = useState("");
   const [tables, setTables] = useState([]);
   const [tableName, setTableName] = useState("");
@@ -13,6 +14,17 @@ function TableManagement() {
   const [editingRow, setEditingRow] = useState({});
   const [message, setMessage] = useState("");
   const [loadingRows, setLoadingRows] = useState(false);
+
+  // Fetch the list of schemas
+  const fetchSchemas = async () => {
+    try {
+      const response = await axios.get("http://127.0.0.1:5000/schemas");
+      setSchemas(response.data.schemas);
+      setMessage("");
+    } catch (error) {
+      setMessage(`Error fetching schemas: ${error.response?.data?.error || error.message}`);
+    }
+  };
 
   // Fetch tables in the schema
   const fetchTables = async () => {
@@ -127,6 +139,10 @@ function TableManagement() {
   };
 
   useEffect(() => {
+    fetchSchemas();
+  }, []);
+
+  useEffect(() => {
     if (schemaName) fetchTables();
   }, [schemaName]);
 
@@ -141,12 +157,18 @@ function TableManagement() {
       {/* Schema Selection */}
       <div className="form-group">
         <label>Schema Name:</label>
-        <input
-          type="text"
+        <select
           value={schemaName}
           onChange={handleSchemaChange}
-          placeholder="Enter schema name"
-        />
+          className="dropdown"
+        >
+          <option value="">Select a schema</option>
+          {schemas.map((schema) => (
+            <option key={schema} value={schema}>
+              {schema}
+            </option>
+          ))}
+        </select>
         <button onClick={fetchTables} className="btn-primary">
           Fetch Tables
         </button>

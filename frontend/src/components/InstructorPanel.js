@@ -3,13 +3,16 @@ import TaskManagement from './TaskManagement';
 import SchemaManagement from './SchemaManagement';
 import SessionManagement from './SessionManagement';
 import Leaderboard from './Leaderboard';
+import CourseManagement from './CourseManagement'; // Import the CourseManagement component
 import '../Styles/InstructorPanel.css';
 
 function InstructorPanel() {
-  const [activeTab, setActiveTab] = useState('Task Management');
+  const [activeTab, setActiveTab] = useState('Course Management');
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'Course Management':
+        return <CourseManagement />;
       case 'Task Management':
         return <TaskManagement />;
       case 'Schema Management':
@@ -19,7 +22,7 @@ function InstructorPanel() {
       case 'Leaderboard':
         return <Leaderboard />;
       default:
-        return <TaskManagement />;
+        return <CourseManagement />;
     }
   };
 
@@ -27,7 +30,7 @@ function InstructorPanel() {
     <div className="instructor-panel">
       <h1>Instructor Panel</h1>
       <div className="tabs">
-        {['Task Management', 'Schema Management', 'Session Management', 'Leaderboard'].map((tab) => (
+        {['Course Management', 'Task Management', 'Schema Management', 'Session Management', 'Leaderboard'].map((tab) => (
           <button
             key={tab}
             className={activeTab === tab ? 'active-tab' : ''}
