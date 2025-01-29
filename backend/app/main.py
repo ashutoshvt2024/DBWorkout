@@ -14,7 +14,7 @@ from flask_jwt_extended import JWTManager
 from app.core.config import Config
 from logging.handlers import RotatingFileHandler
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 # JWT Setup
 app.config["JWT_SECRET_KEY"] = Config.SECRET_KEY

@@ -53,4 +53,11 @@ export const SidebarData = [
     cName: "nav-text",
     roles: ["professor", "student"], // Accessible to all
   },
+  {
+    title: "Logout", // ✅ Added Logout Button
+    path: "/logout",
+    icon: <AiIcons.AiOutlineLogout />,
+    cName: "nav-text logout-button",
+    roles: ["professor", "student"], // Accessible to all
+  },
 ];
