@@ -60,11 +60,26 @@ def create_table_in_schema(schema_id, data):
         if not table_name or not columns:
             raise ValueError("table_name and columns are required")
 
-        # Create table SQL
-        column_definitions = ", ".join([f"{col['name']} {col['type']}" for col in columns])
-        create_table_sql = f"CREATE TABLE {schema.schema_name}.{table_name} ({column_definitions});"
+        # ✅ Ensure schema name is correctly formatted
+        schema_name = schema.schema_name
+        if " " in schema_name:  # If schema has spaces, wrap in double quotes
+            schema_name = f'"{schema_name}"'
 
-        # Execute table creation
+        # ✅ Ensure table name is also wrapped in double quotes if it contains spaces
+        if " " in table_name:
+            table_name = f'"{table_name}"'
+
+        # ✅ Ensure schema exists before using it
+        ensure_schema_sql = text(f'CREATE SCHEMA IF NOT EXISTS {schema_name}')
+        session.execute(ensure_schema_sql)
+
+        # ✅ Construct column definitions safely
+        column_definitions = ", ".join([f"{col['name']} {col['type']}" for col in columns])
+
+        # ✅ Create table inside the schema
+        create_table_sql = text(f"CREATE TABLE {schema_name}.{table_name} ({column_definitions});")
+
+        # Execute queries
         session.execute(create_table_sql)
         session.commit()
 
@@ -87,7 +102,17 @@ def alter_table_in_schema(schema_id, table_name, data):
         if not alter_sql:
             raise ValueError("alter_sql is required")
 
-        session.execute(f"ALTER TABLE {schema.schema_name}.{table_name} {alter_sql};")
+        schema_name = schema.schema_name
+
+        # ✅ Ensure schema and table names are properly wrapped if they contain spaces
+        if " " in schema_name:
+            schema_name = f'"{schema_name}"'
+        if " " in table_name:
+            table_name = f'"{table_name}"'
+
+        # ✅ Wrap the SQL command in `text()` to avoid the SQLAlchemy error
+        alter_table_query = text(f"ALTER TABLE {schema_name}.{table_name} {alter_sql};")
+        session.execute(alter_table_query)
         session.commit()
 
         return {"schema_id": schema_id, "table_name": table_name}
@@ -105,8 +130,23 @@ def delete_table_from_schema(schema_id, table_name):
         if not schema:
             raise ValueError("Schema not found")
 
-        session.execute(f"DROP TABLE IF EXISTS {schema.schema_name}.{table_name};")
+        schema_name = schema.schema_name
+
+        # ✅ Ensure schema name is properly formatted
+        if " " in schema_name:
+            schema_name = f'"{schema_name}"'
+
+        # ✅ Ensure table name is properly formatted
+        if " " in table_name:
+            table_name = f'"{table_name}"'
+
+        # ✅ Fix: Use text() for the SQL query
+        delete_table_sql = text(f"DROP TABLE IF EXISTS {schema_name}.{table_name};")
+
+        # Execute query
+        session.execute(delete_table_sql)
         session.commit()
+
     except Exception as e:
         session.rollback()
         raise e

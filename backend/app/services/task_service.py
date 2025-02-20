@@ -1,6 +1,9 @@
 from app.db.models.task import Task
+from app.db.models.course import Course
 from app.db.session import SessionLocal
-
+from app.db.models.schema import Schema
+from sqlalchemy.orm import Session
+import logging
 # Create a new task
 def create_task(data):
     session = SessionLocal()
@@ -18,6 +21,11 @@ def create_task(data):
         if not task_title or not task_description or not course_id or not session_id or not schema_id or not correct_answer:
             raise ValueError("Missing required fields for task creation")
 
+        # ✅ Check if the provided schema_id exists
+        schema_exists = session.query(Schema).filter(Schema.schema_id == schema_id).first()
+        if not schema_exists:
+            raise ValueError(f"Schema with ID {schema_id} does not exist.")
+
         new_task = Task(
             task_title=task_title,
             task_description=task_description,
@@ -29,23 +37,14 @@ def create_task(data):
             tags=tags,
             deadline=deadline,
         )
+
         session.add(new_task)
         session.commit()
 
-        return {
-            "task_id": new_task.task_id,
-            "task_title": new_task.task_title,
-            "task_description": new_task.task_description,
-            "course_id": new_task.course_id,
-            "session_id": new_task.session_id,
-            "schema_id": new_task.schema_id,
-            "correct_answer": new_task.correct_answer,
-            "difficulty": new_task.difficulty,
-            "tags": new_task.tags,
-            "deadline": new_task.deadline,
-        }
+        return new_task.to_dict()
     except Exception as e:
         session.rollback()
+        logging.error(f"Error creating task: {e}")
         raise e
     finally:
         session.close()
@@ -60,19 +59,7 @@ def list_tasks(course_id=None, session_id=None):
         if session_id:
             query = query.filter(Task.session_id == session_id)
         tasks = query.all()
-        return [
-            {
-                "task_id": task.task_id,
-                "task_title": task.task_title,
-                "task_description": task.task_description,
-                "course_id": task.course_id,
-                "session_id": task.session_id,
-                "schema_id": task.schema_id,
-                "tags": task.tags,
-                "deadline": task.deadline,
-            }
-            for task in tasks
-        ]
+        return [task.to_dict(hide_correct_answer=True) for task in tasks]
     finally:
         session.close()
 
@@ -83,18 +70,7 @@ def get_task_by_id(task_id):
         task = session.query(Task).get(task_id)
         if not task:
             raise ValueError("Task not found")
-        return {
-            "task_id": task.task_id,
-            "task_title": task.task_title,
-            "task_description": task.task_description,
-            "course_id": task.course_id,
-            "session_id": task.session_id,
-            "schema_id": task.schema_id,
-            "correct_answer": task.correct_answer,
-            "difficulty": task.difficulty,
-            "tags": task.tags,
-            "deadline": task.deadline,
-        }
+        return task.to_dict()
     finally:
         session.close()
 
@@ -114,18 +90,7 @@ def update_task(task_id, data):
         task.deadline = data.get("deadline", task.deadline)
         session.commit()
 
-        return {
-            "task_id": task.task_id,
-            "task_title": task.task_title,
-            "task_description": task.task_description,
-            "course_id": task.course_id,
-            "session_id": task.session_id,
-            "schema_id": task.schema_id,
-            "correct_answer": task.correct_answer,
-            "difficulty": task.difficulty,
-            "tags": task.tags,
-            "deadline": task.deadline,
-        }
+        return task.to_dict()
     except Exception as e:
         session.rollback()
         raise e
@@ -145,5 +110,21 @@ def delete_task(task_id):
     except Exception as e:
         session.rollback()
         raise e
+    finally:
+        session.close()
+
+# Check if a professor owns a course
+def professor_owns_course(professor_id: int, course_id: int) -> bool:
+    """Check if the professor owns the given course_id."""
+    session = SessionLocal()
+    try:
+        return session.query(Course).filter(
+            Course.course_id == course_id,
+            Course.professor_id == professor_id
+        ).first() is not None
+    except Exception as e:
+        session.rollback()
+        print(f"Error checking course ownership: {str(e)}")
+        return False
     finally:
         session.close()

@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.schema_service import (
     create_schema,
     list_schemas,
@@ -7,63 +8,112 @@ from app.services.schema_service import (
     alter_table_in_schema,
     delete_table_from_schema,
 )
+from sqlalchemy import text
+import json
+import logging
 
 schemas_blueprint = Blueprint("schemas", __name__)
+logging.basicConfig(level=logging.INFO)
 
-# Create a new schema
+# ✅ Utility function for extracting JWT user
+def get_current_user():
+    identity = get_jwt_identity()
+    try:
+        identity = json.loads(identity)
+    except json.JSONDecodeError:
+        pass
+    return identity
+
+# ---------------------- CREATE SCHEMA (PROFESSORS ONLY) ----------------------
 @schemas_blueprint.route("/schemas", methods=["POST"])
-def create():
+@jwt_required()
+def create_schema_route():
     data = request.json
+    current_user = get_current_user()
+
+    if current_user["role"] != "professor":
+        return jsonify({"error": "Unauthorized - Only professors can create schemas"}), 403
+
+    data["professor_id"] = current_user["user_id"]  # Ensure professor_id is correctly assigned
     try:
         new_schema = create_schema(data)
         return jsonify({"message": "Schema created successfully", "schema": new_schema}), 201
     except Exception as e:
+        logging.error(f"Error creating schema: {str(e)}")
         return jsonify({"error": str(e)}), 400
 
-# List all schemas for a professor
+# ---------------------- LIST SCHEMAS (PROFESSORS & STUDENTS) ----------------------
 @schemas_blueprint.route("/schemas", methods=["GET"])
-def list_all():
-    professor_id = request.args.get("professor_id")
+@jwt_required()
+def list_schemas_route():
+    current_user = get_current_user()
+
     try:
-        schemas = list_schemas(professor_id)
+        schemas = list_schemas(professor_id=current_user["user_id"]) if current_user["role"] == "professor" else []
         return jsonify({"schemas": schemas}), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        logging.error(f"Error listing schemas: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
-# Get schema details by ID
+# ---------------------- GET SCHEMA DETAILS (PROFESSORS & STUDENTS) ----------------------
 @schemas_blueprint.route("/schemas/<int:schema_id>", methods=["GET"])
-def get_details(schema_id):
+@jwt_required()
+def get_schema_details(schema_id):
     try:
         schema = get_schema_by_id(schema_id)
+        if not schema:
+            return jsonify({"error": "Schema not found"}), 404
         return jsonify({"schema": schema}), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 404
+        logging.error(f"Error fetching schema: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
-# Create a table in a specific schema
+# ---------------------- CREATE TABLE IN SCHEMA (PROFESSORS ONLY) ----------------------
 @schemas_blueprint.route("/schemas/<int:schema_id>/tables", methods=["POST"])
-def create_table(schema_id):
+@jwt_required()
+def create_table_route(schema_id):
     data = request.json
+    current_user = get_current_user()
+
+    if current_user["role"] != "professor":
+        return jsonify({"error": "Unauthorized - Only professors can create tables"}), 403
+
     try:
         table = create_table_in_schema(schema_id, data)
         return jsonify({"message": "Table created successfully", "table": table}), 201
     except Exception as e:
+        logging.error(f"Error creating table: {str(e)}")
         return jsonify({"error": str(e)}), 400
 
-# Alter an existing table in the schema
+# ---------------------- ALTER TABLE IN SCHEMA (PROFESSORS ONLY) ----------------------
 @schemas_blueprint.route("/schemas/<int:schema_id>/tables/<string:table_name>", methods=["PUT"])
-def alter_table(schema_id, table_name):
+@jwt_required()
+def alter_table_route(schema_id, table_name):
     data = request.json
+    current_user = get_current_user()
+
+    if current_user["role"] != "professor":
+        return jsonify({"error": "Unauthorized - Only professors can alter tables"}), 403
+
     try:
-        updated_table = alter_table_in_schema(schema_id, table_name, data)
+        updated_table = alter_table_in_schema(schema_id, table_name, data)  # ✅ Only 3 arguments now
         return jsonify({"message": "Table altered successfully", "table": updated_table}), 200
     except Exception as e:
+        logging.error(f"Error altering table: {str(e)}")
         return jsonify({"error": str(e)}), 400
 
-# Delete a table from the schema
+# ---------------------- DELETE TABLE FROM SCHEMA (PROFESSORS ONLY) ----------------------
 @schemas_blueprint.route("/schemas/<int:schema_id>/tables/<string:table_name>", methods=["DELETE"])
-def delete_table(schema_id, table_name):
+@jwt_required()
+def delete_table_route(schema_id, table_name):
+    current_user = get_current_user()
+
+    if current_user["role"] != "professor":
+        return jsonify({"error": "Unauthorized - Only professors can delete tables"}), 403
+
     try:
         delete_table_from_schema(schema_id, table_name)
         return jsonify({"message": "Table deleted successfully"}), 200
     except Exception as e:
+        logging.error(f"Error deleting table: {str(e)}")
         return jsonify({"error": str(e)}), 400

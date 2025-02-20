@@ -1,161 +1,164 @@
-import React, { useState } from "react";
-import axios from "axios";
-import "../Styles/TaskManagement.css"; // Add CSS file for styling
+import React, { useEffect, useState } from "react";
+import api from "../services/api"; // Import axios instance
+import "../Styles/TaskManagement.css";
 
 function TaskManagement() {
   const [tasks, setTasks] = useState([]);
-  const [sessionID, setSessionID] = useState("");
-  const [questionText, setQuestionText] = useState("");
-  const [solutionQuery, setSolutionQuery] = useState("");
-  const [category, setCategory] = useState("");
-  const [message, setMessage] = useState("");
-  const [editingTask, setEditingTask] = useState(null);
+  const [courses, setCourses] = useState([]);
+  const [sessions, setSessions] = useState([]);
+  const [schemas, setSchemas] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [currentTask, setCurrentTask] = useState(null);
+  const [newTask, setNewTask] = useState({
+    task_title: "",
+    task_description: "",
+    course_id: "",
+    session_id: "",
+    schema_id: "",
+    difficulty: "medium",
+    deadline: "",
+    correct_answer: "",
+  });
 
-  // Fetch tasks for a session
+  useEffect(() => {
+    fetchTasks();
+    fetchCourses();
+    fetchSchemas();
+  }, []);
+
   const fetchTasks = async () => {
     try {
-      if (!sessionID) {
-        setMessage("Please enter a Session ID.");
-        return;
-      }
-      const response = await axios.get(
-        `http://127.0.0.1:5000/tasks?session_id=${sessionID}`
-      );
+      const response = await api.get("/tasks");
       setTasks(response.data.tasks);
-      setMessage("");
     } catch (error) {
-      setMessage(`Error fetching tasks: ${error.response?.data?.error || error.message}`);
+      console.error("Error fetching tasks:", error);
     }
   };
 
-  // Create a new task
+  const fetchCourses = async () => {
+    try {
+      const response = await api.get("/courses");
+      setCourses(response.data.courses);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+    }
+  };
+
+  const fetchSessions = async (courseId) => {
+    try {
+      const response = await api.get(`/sessions?course_id=${courseId}`);
+      setSessions(response.data.sessions);
+    } catch (error) {
+      console.error("Error fetching sessions:", error);
+    }
+  };
+
+  const fetchSchemas = async () => {
+    try {
+      const response = await api.get("/schemas");
+      setSchemas(response.data.schemas);
+    } catch (error) {
+      console.error("Error fetching schemas:", error);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewTask({ ...newTask, [name]: value });
+  };
+
+  const handleCourseChange = (e) => {
+    const courseId = e.target.value;
+    setNewTask({ ...newTask, course_id: courseId, session_id: "" });
+    fetchSessions(courseId);
+  };
+
   const handleCreateTask = async () => {
     try {
-      const payload = {
-        session_id: sessionID,
-        question_text: questionText,
-        solution_query: solutionQuery,
-        category: category,
-      };
-      const response = await axios.post("http://127.0.0.1:5000/tasks/", payload);
-      setMessage(response.data.message);
+      await api.post("/tasks", newTask);
       fetchTasks();
+      setShowForm(false);
     } catch (error) {
-      setMessage(`Error creating task: ${error.response?.data?.error || error.message}`);
+      console.error("Error creating task:", error);
     }
   };
 
-  // Edit an existing task
-  const handleEditTask = async () => {
+  const handleUpdateTask = async () => {
     try {
-      const payload = {
-        question_text: questionText,
-        solution_query: solutionQuery,
-        category: category,
-      };
-      await axios.put(`http://127.0.0.1:5000/tasks/${editingTask.task_id}`, payload);
-      setMessage("Task updated successfully.");
+      await api.put(`/tasks/${currentTask.task_id}`, currentTask);
       fetchTasks();
-      setEditingTask(null);
+      setShowEditForm(false);
     } catch (error) {
-      setMessage(`Error updating task: ${error.response?.data?.error || error.message}`);
+      console.error("Error updating task:", error);
     }
   };
 
-  // Delete a task
-  const handleDeleteTask = async (taskId) => {
+  const handleDeleteTask = async () => {
     try {
-      await axios.delete(`http://127.0.0.1:5000/tasks/${taskId}`);
-      setMessage("Task deleted successfully.");
+      await api.delete(`/tasks/${currentTask.task_id}`);
       fetchTasks();
+      setShowDeleteConfirm(false);
     } catch (error) {
-      setMessage(`Error deleting task: ${error.response?.data?.error || error.message}`);
+      console.error("Error deleting task:", error);
     }
   };
 
-  // Render tasks in a table
-  const renderTaskTable = () => {
-    if (tasks.length === 0) {
-      return <p>No tasks available for this session.</p>;
-    }
+  return (
+    <div className="task-management">
+      <h1>Task Management</h1>
+      <button className="create-btn" onClick={() => setShowForm(true)}>+ Create Task</button>
 
-    return (
       <table className="task-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Question</th>
-            <th>Category</th>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Difficulty</th>
+            <th>Deadline</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {tasks.map((task) => (
             <tr key={task.task_id}>
-              <td>{task.task_id}</td>
-              <td>{task.question_text}</td>
-              <td>{task.category}</td>
+              <td>{task.task_title}</td>
+              <td>{task.task_description}</td>
+              <td>{task.difficulty}</td>
+              <td>{task.deadline}</td>
               <td>
-                <button onClick={() => startEditingTask(task)}>Edit</button>
-                <button onClick={() => handleDeleteTask(task.task_id)}>Delete</button>
+                <button onClick={() => { setCurrentTask(task); setShowEditForm(true); }}>Edit</button>
+                <button onClick={() => { setCurrentTask(task); setShowDeleteConfirm(true); }}>Delete</button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-    );
-  };
 
-  const startEditingTask = (task) => {
-    setEditingTask(task);
-    setQuestionText(task.question_text);
-    setSolutionQuery(task.solution_query);
-    setCategory(task.category);
-  };
-
-  return (
-    <div className="task-management">
-      <h2>Task Management</h2>
-
-      {/* Task Form */}
-      <div className="task-form">
-        <h3>{editingTask ? "Edit Task" : "Create Task"}</h3>
-        <input
-          type="text"
-          value={sessionID}
-          onChange={(e) => setSessionID(e.target.value)}
-          placeholder="Session ID"
-          disabled={editingTask}
-        />
-        <textarea
-          value={questionText}
-          onChange={(e) => setQuestionText(e.target.value)}
-          placeholder="Question Text"
-        />
-        <textarea
-          value={solutionQuery}
-          onChange={(e) => setSolutionQuery(e.target.value)}
-          placeholder="Solution Query"
-        />
-        <input
-          type="text"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          placeholder="Category"
-        />
-        <button onClick={editingTask ? handleEditTask : handleCreateTask}>
-          {editingTask ? "Update Task" : "Create Task"}
-        </button>
-      </div>
-
-      {/* Task List */}
-      <div className="task-list">
-        <h3>Tasks</h3>
-        <button onClick={fetchTasks}>Load Tasks</button>
-        {renderTaskTable()}
-      </div>
-
-      {message && <p className="message">{message}</p>}
+      {showForm && (
+        <div className="modal">
+          <div className="modal-content">
+            <h2>Create Task</h2>
+            <input type="text" name="task_title" placeholder="Task Title" onChange={handleInputChange} />
+            <textarea name="task_description" placeholder="Task Description" onChange={handleInputChange} />
+            <select name="course_id" onChange={handleCourseChange}>
+              <option value="">Select Course</option>
+              {courses.map(course => <option key={course.course_id} value={course.course_id}>{course.course_name}</option>)}
+            </select>
+            <select name="session_id" onChange={handleInputChange}>
+              <option value="">Select Session</option>
+              {sessions.map(session => <option key={session.session_id} value={session.session_id}>{session.session_name}</option>)}
+            </select>
+            <select name="schema_id" onChange={handleInputChange}>
+              <option value="">Select Schema</option>
+              {schemas.map(schema => <option key={schema.schema_id} value={schema.schema_id}>{schema.schema_name}</option>)}
+            </select>
+            <button onClick={handleCreateTask}>Create</button>
+            <button onClick={() => setShowForm(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

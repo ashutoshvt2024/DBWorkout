@@ -1,42 +1,84 @@
 /* Reset margin and padding for consistency */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
 /* Workspace Layout */
 .workspace {
   display: flex;
-
+  height: 100vh;
+  background-color: #f5f5f5; /* Soft background */
+  padding: 20px;
+  gap: 20px; /* Adds spacing between Task and Editor */
 }
 
 /* Editor Container */
 .editor-container {
-  flex: 1; /* Takes the remaining space */
-  overflow: hidden; /* Avoid unnecessary scrollbars */
-  position: relative; /* Ensure alignment calculations */
- 
-}
-.editor-container h2{
-    color: #333;
-}
-.sql-statement-container{
+  flex: 1;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Section Headers */
+.editor-container h2 {
+  color: #333;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* SQL Statement Header */
+.sql-statement-container {
+  display: flex;
   align-items: center;
-  border-radius: 10px;
   background-color: rgb(231, 233, 233);
-  padding-left: 20px;
-  margin-bottom:10px ;
-  height: 60px;
+  padding: 15px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  border-left: 4px solid #8b1f41;
 }
-.editor{
-  padding-top: 10px;
-  border-top: 2px solid rgb(139, 31, 65);
-  border-bottom: 2px solid rgb(139, 31, 65);
+
+/* Editor Wrapper (Fixes cursor misalignment) */
+.editor-wrapper {
+  flex: 1;
+  border-top: 2px solid #8b1f41;
+  border-bottom: 2px solid #8b1f41;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 5px;
 }
+
+/* Fixes the Monaco Editor cursor issue */
+.editor-wrapper .monaco-editor {
+  font-family: "Fira Code", Consolas, "Courier New", monospace !important;
+  font-size: 16px !important;
+  line-height: 24px !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Results Section */
 .result-container {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  border-radius: 10px;
   background-color: rgb(231, 233, 233);
-  padding-left: 20px;
-  height: 60px;
+  padding: 15px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  border-left: 4px solid #8b1f41;
+}
+
+/* Task Component */
+.task-container {
+  width: 30%;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
 }

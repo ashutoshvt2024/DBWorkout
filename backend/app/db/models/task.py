@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
-from sqlalchemy import Column, Date, DateTime, Enum, Integer, String, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Enum, Date, ForeignKey, Text, DateTime
 from sqlalchemy.orm import relationship
+from datetime import datetime, timezone
 from app.db.session import Base
 
 class Task(Base):
@@ -23,3 +23,20 @@ class Task(Base):
     session = relationship("Session", back_populates="tasks")
     schema = relationship("Schema", back_populates="tasks")
     assignments = relationship("Assignment", back_populates="task")
+
+    def to_dict(self, hide_correct_answer=False):
+        task_dict = {
+            "task_id": self.task_id,
+            "task_title": self.task_title,
+            "task_description": self.task_description,
+            "course_id": self.course_id,
+            "session_id": self.session_id,
+            "schema_id": self.schema_id,
+            "difficulty": self.difficulty,
+            "tags": self.tags,
+            "deadline": str(self.deadline),
+            "created_at": str(self.created_at)
+        }
+        if not hide_correct_answer:
+            task_dict["correct_answer"] = self.correct_answer
+        return task_dict

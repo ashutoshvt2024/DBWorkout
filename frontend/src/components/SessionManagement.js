@@ -1,320 +1,179 @@
-import React, { useState, useEffect } from "react";
-import "../Styles/SessionManagement.css";
-import axios from "axios";
+import React, { useEffect, useState } from "react";
+import api from "../services/api"; // Axios instance for API requests
+import "../Styles/SessionManagement.css"; // CSS styles
 
 function SessionManagement() {
   const [sessions, setSessions] = useState([]);
-  const [newSessionName, setNewSessionName] = useState("");
-  const [newSchemaId, setNewSchemaId] = useState("");
-  const [newCourseInstanceId, setNewCourseInstanceId] = useState("");
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("");
-  const [showDeletePrompt, setShowDeletePrompt] = useState(false);
-  const [sessionToDelete, setSessionToDelete] = useState(null);
-  const [showEditModal, setShowEditModal] = useState(false); // To control edit modal visibility
-  const [editingSession, setEditingSession] = useState(null); // Session being edited
-  const [tasks, setTasks] = useState([]); // Tasks for a session
-  const [showTasksModal, setShowTasksModal] = useState(false); // Task modal visibility
-  const [selectedSession, setSelectedSession] = useState(null); // Selected session for viewing tasks
-  const [schemas, setSchemas] = useState([]); // Store available schemas
-  const [selectedSchemaId, setSelectedSchemaId] = useState(""); // Track selected schema
-  const [selectedSessionId, setSelectedSessionId] = useState(null); // Track selected session for association
-  // Fetch all sessions
-  const fetchSessions = async () => {
-    try {
-      const response = await axios.get("http://127.0.0.1:5000/sessions/");
-      setSessions(response.data.sessions);
-      setMessage("");
-    } catch (error) {
-      setMessageType("error");
-      setMessage(`Error fetching sessions: ${error.response?.data?.error || error.message}`);
-    }
-  };
-   // Fetch all schemas
-   const fetchSchemas = async () => {
-    try {
-      const response = await axios.get("http://127.0.0.1:5000/schemas");
-      setSchemas(response.data.schemas);
-    } catch (error) {
-      setMessageType("error");
-      setMessage(`Error fetching schemas: ${error.response?.data?.error || error.message}`);
-    }
-  };
-  // Associate schema with a session
-  const associateSchema = async () => {
-    try {
-      if (!selectedSessionId || !selectedSchemaId) {
-        setMessageType("error");
-        setMessage("Please select a session and schema.");
-        return;
-      }
+  const [courses, setCourses] = useState([]);
+  const [selectedCourse, setSelectedCourse] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [currentSession, setCurrentSession] = useState(null);
+  const [newSession, setNewSession] = useState({
+    course_id: "",
+    session_name: "",
+    session_date: "",
+  });
 
-      const payload = {
-        session_id: selectedSessionId,
-        schema_id: selectedSchemaId,
-      };
-
-      await axios.put("http://127.0.0.1:5000/sessions/associate-schema", payload);
-      setMessageType("success");
-      setMessage("Schema associated successfully!");
-      fetchSessions(); // Refresh session data
-    } catch (error) {
-      setMessageType("error");
-      setMessage(`Error associating schema: ${error.response?.data?.error || error.message}`);
-    }
-  };
-
-  // Fetch tasks for a session
-  const fetchTasks = async (sessionId) => {
-    try {
-      const response = await axios.get(`http://127.0.0.1:5000/sessions/${sessionId}/tasks`);
-      setTasks(response.data.tasks);
-      setSelectedSession(sessionId);
-      setShowTasksModal(true); // Show tasks modal
-    } catch (error) {
-      setMessageType("error");
-      setMessage(`Error fetching tasks: ${error.response?.data?.error || error.message}`);
-    }
-  };
-
-  // Close tasks modal
-  const closeTasksModal = () => {
-    setShowTasksModal(false);
-    setTasks([]);
-    setSelectedSession(null);
-  };
-
-  // Create a new session
-  const createSession = async () => {
-    try {
-      const payload = {
-        session_name: newSessionName,
-        schema_id: newSchemaId || null,
-        course_instance_id: newCourseInstanceId,
-      };
-
-      await axios.post("http://127.0.0.1:5000/sessions/", payload);
-      setMessageType("success");
-      setMessage("Session created successfully!");
-      setNewSessionName("");
-      setNewSchemaId("");
-      setNewCourseInstanceId("");
-      fetchSessions(); // Refresh sessions list
-    } catch (error) {
-      setMessageType("error");
-      setMessage(`Error creating session: ${error.response?.data?.error || error.message}`);
-    }
-  };
-
-  // Confirm delete
-  const confirmDelete = (session) => {
-    setSessionToDelete(session);
-    setShowDeletePrompt(true);
-  };
-
-  // Delete a session
-  const deleteSession = async () => {
-    try {
-      if (!sessionToDelete) return;
-      await axios.delete(`http://127.0.0.1:5000/sessions/${sessionToDelete.session_id}`);
-      setMessageType("success");
-      setMessage("Session deleted successfully!");
-      fetchSessions(); // Refresh sessions list
-      closeDeletePrompt();
-    } catch (error) {
-      setMessageType("error");
-      setMessage(`Error deleting session: ${error.response?.data?.error || error.message}`);
-    }
-  };
-
-  // Close delete prompt
-  const closeDeletePrompt = () => {
-    setShowDeletePrompt(false);
-    setSessionToDelete(null);
-  };
-
-  // Open edit modal
-  const openEditModal = (session) => {
-    setEditingSession(session);
-    setShowEditModal(true);
-  };
-
-  // Close edit modal
-  const closeEditModal = () => {
-    setShowEditModal(false);
-    setEditingSession(null);
-  };
-    // Toggle session status
-    const toggleSessionStatus = async (session) => {
-      try {
-        const payload = { is_active: !session.is_active };
-        await axios.put(`http://127.0.0.1:5000/sessions/${session.session_id}/status`, payload);
-        setMessageType("success");
-        setMessage("Session status updated successfully!");
-        fetchSessions(); // Refresh sessions list
-      } catch (error) {
-        setMessageType("error");
-        setMessage(`Error updating session status: ${error.response?.data?.error || error.message}`);
-      }
-    };
-
-  // Save edited session
-  const saveEditedSession = async () => {
-    try {
-      const payload = {
-        session_name: editingSession.session_name,
-        schema_id: editingSession.schema_id || null,
-        course_instance_id: editingSession.course_instance_id,
-      };
-
-      await axios.put(`http://127.0.0.1:5000/sessions/${editingSession.session_id}`, payload);
-      setMessageType("success");
-      setMessage("Session updated successfully!");
-      fetchSessions(); // Refresh session list
-      closeEditModal();
-    } catch (error) {
-      setMessageType("error");
-      setMessage(`Error updating session: ${error.response?.data?.error || error.message}`);
-    }
-  };
-
+  // Fetch courses for dropdown
   useEffect(() => {
-    fetchSessions();
-    fetchSchemas();
+    fetchCourses();
   }, []);
+
+  const fetchCourses = async () => {
+    try {
+      const response = await api.get("/courses");
+      setCourses(response.data.courses);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+    }
+  };
+
+  // Fetch sessions based on selected course
+  useEffect(() => {
+    if (selectedCourse) fetchSessions(selectedCourse);
+  }, [selectedCourse]);
+
+  const fetchSessions = async (courseId) => {
+    try {
+      const response = await api.get(`/sessions?course_id=${courseId}`);
+      setSessions(response.data.sessions);
+    } catch (error) {
+      console.error("Error fetching sessions:", error);
+    }
+  };
+
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewSession({ ...newSession, [name]: value });
+  };
+
+  // Create new session
+  const handleCreateSession = async () => {
+    try {
+      const payload = { ...newSession, course_id: selectedCourse };
+      await api.post("/sessions", payload);
+      fetchSessions(selectedCourse);
+      setShowForm(false);
+    } catch (error) {
+      console.error("Error creating session:", error);
+    }
+  };
+
+  // Open edit form
+  const openEditForm = (session) => {
+    setCurrentSession(session);
+    setShowEditForm(true);
+  };
+
+  // Update session
+  const handleUpdateSession = async () => {
+    try {
+      await api.put(`/sessions/${currentSession.session_id}`, currentSession);
+      fetchSessions(selectedCourse);
+      setShowEditForm(false);
+    } catch (error) {
+      console.error("Error updating session:", error);
+    }
+  };
+
+  // Open delete confirmation
+  const openDeleteConfirm = (session) => {
+    setCurrentSession(session);
+    setShowDeleteConfirm(true);
+  };
+
+  // Delete session
+  const handleDeleteSession = async () => {
+    try {
+      await api.delete(`/sessions/${currentSession.session_id}`);
+      fetchSessions(selectedCourse);
+      setShowDeleteConfirm(false);
+    } catch (error) {
+      console.error("Error deleting session:", error);
+    }
+  };
 
   return (
     <div className="session-management">
-      <h2>Session Management</h2>
+      <h1>Session Management</h1>
 
-      {/* Message Display */}
-      {message && <div className={`message ${messageType}`}>{message}</div>}
+      {/* Course Selection Dropdown */}
+      <select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)}>
+        <option value="">Select Course</option>
+        {courses.map((course) => (
+          <option key={course.course_id} value={course.course_id}>
+            {course.course_name}
+          </option>
+        ))}
+      </select>
 
-      {/* Form for creating new session */}
-      <div className="form-container">
-        <h3>Create New Session</h3>
-        <label>Session Name</label>
-        <input
-          type="text"
-          placeholder="Enter session name"
-          value={newSessionName}
-          onChange={(e) => setNewSessionName(e.target.value)}
-        />
-        <label>Schema ID (Optional)</label>
-        <input
-          type="text"
-          placeholder="Enter schema ID"
-          value={newSchemaId}
-          onChange={(e) => setNewSchemaId(e.target.value)}
-        />
-        <label>Course Instance ID</label>
-        <input
-          type="text"
-          placeholder="Enter course instance ID"
-          value={newCourseInstanceId}
-          onChange={(e) => setNewCourseInstanceId(e.target.value)}
-        />
-        <button onClick={createSession}>Create Session</button>
-      </div>
+      <button className="create-btn" onClick={() => setShowForm(true)} disabled={!selectedCourse}>
+        + Create Session
+      </button>
 
-      {/* Table for displaying sessions */}
-      <div className="table-container">
-        <table className="styled-table">
-          <thead>
-            <tr>
-              <th>Session Name</th>
-              <th>Schema ID</th>
-              <th>Course Instance</th>
-              <th>Active</th>
-              <th>Actions</th>
+      {/* Session List */}
+      <table className="session-table">
+        <thead>
+          <tr>
+            <th>Session Name</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sessions.map((session) => (
+            <tr key={session.session_id}>
+              <td>{session.session_name}</td>
+              <td>{session.session_date}</td>
+              <td>
+                <button className="edit-btn" onClick={() => openEditForm(session)}>Edit</button>
+                <button className="delete-btn" onClick={() => openDeleteConfirm(session)}>Delete</button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {sessions.map((session) => (
-              <tr key={session.session_id}>
-                <td>{session.session_name}</td>
-                <td>{session.schema_id !== null ? session.schema_id : "N/A"}</td>
-                <td>{session.course_instance_id}</td>
-                <td>{session.is_active ? "Yes" : "No"}</td>
-                <td className="actions-cell">
-                  <button className="btn-edit" onClick={() => openEditModal(session)}>Edit</button>
-                  <button className="btn-delete" onClick={() => confirmDelete(session)}>Delete</button>
-                  <button className="btn-toggle" onClick={() => toggleSessionStatus(session)}>
-                    {session.is_active ? "Deactivate" : "Activate"}
-                  </button>
-                  <button className="btn-view-tasks" onClick={() => fetchTasks(session.session_id)}>
-                    View Tasks
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      
+          ))}
+        </tbody>
+      </table>
 
-      {/* Delete Confirmation Prompt */}
-      {showDeletePrompt && (
-        <div className="delete-prompt">
-          <div className="delete-prompt-content">
-            <p>Are you sure you want to delete the session "{sessionToDelete?.session_name}"?</p>
-            <button className="btn-danger" onClick={deleteSession}>Yes, Delete</button>
-            <button className="btn-secondary" onClick={closeDeletePrompt}>Cancel</button>
+      {/* Create Session Modal */}
+      {showForm && (
+        <div className="modal">
+          <div className="modal-content">
+            <h2>Create Session</h2>
+            <input type="text" name="session_name" placeholder="Session Name" onChange={handleInputChange} />
+            <input type="date" name="session_date" onChange={handleInputChange} />
+            <button onClick={handleCreateSession}>Create</button>
+            <button onClick={() => setShowForm(false)}>Cancel</button>
           </div>
         </div>
       )}
 
-      {/* Edit Modal */}
-      {showEditModal && (
+      {/* Edit Session Modal */}
+      {showEditForm && (
         <div className="modal">
           <div className="modal-content">
-            <h3>Edit Session</h3>
-            <label>Session Name</label>
+            <h2>Edit Session</h2>
             <input
               type="text"
-              value={editingSession?.session_name || ""}
-              onChange={(e) =>
-                setEditingSession({ ...editingSession, session_name: e.target.value })
-              }
+              name="session_name"
+              value={currentSession.session_name}
+              onChange={(e) => setCurrentSession({ ...currentSession, session_name: e.target.value })}
             />
-            <label>Schema ID</label>
-            <input
-              type="text"
-              value={editingSession?.schema_id || ""}
-              onChange={(e) =>
-                setEditingSession({ ...editingSession, schema_id: e.target.value || null })
-              }
-            />
-            <label>Course Instance ID</label>
-            <input
-              type="text"
-              value={editingSession?.course_instance_id || ""}
-              onChange={(e) =>
-                setEditingSession({ ...editingSession, course_instance_id: e.target.value })
-              }
-            />
-            <button onClick={saveEditedSession} className="btn-primary">Save</button>
-            <button onClick={closeEditModal} className="btn-secondary">Cancel</button>
+            <button onClick={handleUpdateSession}>Update</button>
+            <button onClick={() => setShowEditForm(false)}>Cancel</button>
           </div>
         </div>
       )}
 
-      {/* Tasks Modal */}
-      {showTasksModal && (
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
         <div className="modal">
           <div className="modal-content">
-            <h3>Tasks for Session {selectedSession}</h3>
-            <ul>
-              {tasks.map((task,index) => (
-                <li key={task.task_id}>
-                  <div><strong>Task {index + 1}:</strong></div>
-                  <strong>Question:</strong> {task.question_text} <br />
-                  <strong>Solution Query:</strong> {task.solution_query} <br />
-                  <strong>Category:</strong> {task.category}
-                </li>
-              ))}
-            </ul>
-            <button onClick={closeTasksModal} className="btn-secondary">Close</button>
+            <h2>Are you sure you want to delete this session?</h2>
+            <button onClick={handleDeleteSession}>Yes</button>
+            <button onClick={() => setShowDeleteConfirm(false)}>No</button>
           </div>
         </div>
       )}
@@ -323,8 +182,3 @@ function SessionManagement() {
 }
 
 export default SessionManagement;
-
-
-
-
-
