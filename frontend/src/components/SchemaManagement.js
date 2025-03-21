@@ -30,9 +30,15 @@ function SchemaManagement() {
     setSelectedSchema(schemaId);
     try {
       const response = await api.get(`/schemas/${schemaId}`);
-      setTables(response.data.schema.tables || []);
+      
+      if (response.data.schema) {
+        setTables(response.data.schema.tables || []);  // ✅ Set tables properly
+      } else {
+        setTables([]);  // ✅ If no tables, set empty array
+      }
     } catch (error) {
       console.error("Error fetching tables:", error);
+      setTables([]);  // ✅ Prevents undefined state issues
     }
   };
 
@@ -80,13 +86,13 @@ function SchemaManagement() {
       <div>
         <label>Select Schema:</label>
         <select onChange={(e) => fetchTables(e.target.value)}>
-          <option value="">-- Select Schema --</option>
-          {schemas.map((schema) => (
-            <option key={schema.schema_id} value={schema.schema_id}>
-              {schema.schema_name}
-            </option>
-          ))}
-        </select>
+  <option value="">-- Select Schema --</option>
+  {schemas.map((schema) => (
+    <option key={schema.schema_id} value={schema.schema_id}>
+      {schema.schema_name}
+    </option>
+  ))}
+</select>
       </div>
 
       <button onClick={() => setIsSqlMode(!isSqlMode)}>
@@ -152,15 +158,15 @@ function SchemaManagement() {
         </div>
       )}
 
-      {tables.length > 0 && (
-        <div>
-          <h3>Existing Tables</h3>
-          <ul>
-            {tables.map((table, index) => (
-              <li key={index}>{table.table_name}</li>
-            ))}
-          </ul>
-        </div>
+{tables.length > 0 && (
+  <div>
+    <h3>Existing Tables</h3>
+    <ul>
+      {tables.map((table, index) => (
+        <li key={index}>{table}</li>  // ✅ Display table names correctly
+      ))}
+    </ul>
+  </div>
       )}
     </div>
   );

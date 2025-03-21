@@ -1,6 +1,7 @@
 from app.db.models.schema import Schema
 from app.db.session import SessionLocal
-from sqlalchemy import text
+import logging
+from sqlalchemy import Table, text
 # Create a new schema
 def create_schema(data):
     session = SessionLocal()
@@ -43,7 +44,22 @@ def get_schema_by_id(schema_id):
         schema = session.query(Schema).get(schema_id)
         if not schema:
             raise ValueError("Schema not found")
-        return {"schema_id": schema.schema_id, "schema_name": schema.schema_name}
+
+        # ✅ Fetch tables belonging to this schema
+        tables = session.execute(
+            text(f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{schema.schema_name}'")
+        ).fetchall()
+
+        table_names = [table[0] for table in tables]  # Extract table names
+
+        return {
+            "schema_id": schema.schema_id,
+            "schema_name": schema.schema_name,
+            "tables": table_names,  # ✅ Return tables list
+        }
+    except Exception as e:
+        logging.error(f"Error fetching schema: {str(e)}")
+        return None
     finally:
         session.close()
 
@@ -98,24 +114,25 @@ def alter_table_in_schema(schema_id, table_name, data):
         if not schema:
             raise ValueError("Schema not found")
 
-        alter_sql = data.get("alter_sql")  # Direct SQL for altering
-        if not alter_sql:
-            raise ValueError("alter_sql is required")
-
         schema_name = schema.schema_name
+        sql_command = data.get("sql_command")  # 🔹 SQL command from SQL mode
 
-        # ✅ Ensure schema and table names are properly wrapped if they contain spaces
-        if " " in schema_name:
-            schema_name = f'"{schema_name}"'
-        if " " in table_name:
-            table_name = f'"{table_name}"'
+        # 🔹 If SQL Mode is used, execute the given SQL command directly
+        if sql_command:
+            alter_table_query = text(sql_command)
+        else:
+            # 🔹 If UI Mode is used, construct the SQL ALTER statement dynamically
+            column_updates = data.get("column_updates")  # [{"column_name": "age", "new_type": "VARCHAR(20)"}]
+            if not column_updates:
+                raise ValueError("column_updates or sql_command required")
 
-        # ✅ Wrap the SQL command in `text()` to avoid the SQLAlchemy error
-        alter_table_query = text(f"ALTER TABLE {schema_name}.{table_name} {alter_sql};")
+            column_changes = ", ".join([f"ALTER COLUMN {col['column_name']} TYPE {col['new_type']}" for col in column_updates])
+            alter_table_query = text(f"ALTER TABLE {schema_name}.{table_name} {column_changes};")
+
         session.execute(alter_table_query)
         session.commit()
 
-        return {"schema_id": schema_id, "table_name": table_name}
+        return {"message": "Table updated successfully", "schema_id": schema_id, "table_name": table_name}
     except Exception as e:
         session.rollback()
         raise e
@@ -132,21 +149,34 @@ def delete_table_from_schema(schema_id, table_name):
 
         schema_name = schema.schema_name
 
-        # ✅ Ensure schema name is properly formatted
-        if " " in schema_name:
-            schema_name = f'"{schema_name}"'
-
-        # ✅ Ensure table name is properly formatted
-        if " " in table_name:
-            table_name = f'"{table_name}"'
-
-        # ✅ Fix: Use text() for the SQL query
         delete_table_sql = text(f"DROP TABLE IF EXISTS {schema_name}.{table_name};")
 
-        # Execute query
         session.execute(delete_table_sql)
         session.commit()
 
+        return {"message": "Table deleted successfully", "schema_id": schema_id}
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
+
+def execute_sql_on_schema(schema_id, sql_command):
+    session = SessionLocal()
+    try:
+        schema = session.query(Schema).get(schema_id)
+        if not schema:
+            raise ValueError("Schema not found")
+
+        schema_name = schema.schema_name
+
+        # ✅ Ensure command is properly formatted
+        safe_sql = text(sql_command.replace("SCHEMA_NAME", schema_name))
+
+        session.execute(safe_sql)
+        session.commit()
+
+        return {"message": "SQL command executed successfully"}
     except Exception as e:
         session.rollback()
         raise e

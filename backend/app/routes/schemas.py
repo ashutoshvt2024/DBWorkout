@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.schema_service import (
     create_schema,
+    execute_sql_on_schema,
     list_schemas,
     get_schema_by_id,
     create_table_in_schema,
@@ -63,9 +64,8 @@ def get_schema_details(schema_id):
         schema = get_schema_by_id(schema_id)
         if not schema:
             return jsonify({"error": "Schema not found"}), 404
-        return jsonify({"schema": schema}), 200
+        return jsonify(schema), 200
     except Exception as e:
-        logging.error(f"Error fetching schema: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 # ---------------------- CREATE TABLE IN SCHEMA (PROFESSORS ONLY) ----------------------
@@ -88,32 +88,32 @@ def create_table_route(schema_id):
 # ---------------------- ALTER TABLE IN SCHEMA (PROFESSORS ONLY) ----------------------
 @schemas_blueprint.route("/schemas/<int:schema_id>/tables/<string:table_name>", methods=["PUT"])
 @jwt_required()
-def alter_table_route(schema_id, table_name):
+def alter_table(schema_id, table_name):
     data = request.json
-    current_user = get_current_user()
-
-    if current_user["role"] != "professor":
-        return jsonify({"error": "Unauthorized - Only professors can alter tables"}), 403
-
     try:
-        updated_table = alter_table_in_schema(schema_id, table_name, data)  # ✅ Only 3 arguments now
-        return jsonify({"message": "Table altered successfully", "table": updated_table}), 200
+        result = alter_table_in_schema(schema_id, table_name, data)
+        return jsonify(result), 200
     except Exception as e:
-        logging.error(f"Error altering table: {str(e)}")
         return jsonify({"error": str(e)}), 400
 
 # ---------------------- DELETE TABLE FROM SCHEMA (PROFESSORS ONLY) ----------------------
 @schemas_blueprint.route("/schemas/<int:schema_id>/tables/<string:table_name>", methods=["DELETE"])
 @jwt_required()
-def delete_table_route(schema_id, table_name):
-    current_user = get_current_user()
-
-    if current_user["role"] != "professor":
-        return jsonify({"error": "Unauthorized - Only professors can delete tables"}), 403
-
+def delete_table(schema_id, table_name):
     try:
-        delete_table_from_schema(schema_id, table_name)
-        return jsonify({"message": "Table deleted successfully"}), 200
+        result = delete_table_from_schema(schema_id, table_name)
+        return jsonify(result), 200
     except Exception as e:
-        logging.error(f"Error deleting table: {str(e)}")
+        return jsonify({"error": str(e)}), 400
+
+# 🔹 Execute SQL Query on Schema
+@schemas_blueprint.route("/schemas/<int:schema_id>/execute", methods=["POST"])
+@jwt_required()
+def execute_sql(schema_id):
+    data = request.json
+    sql_command = data.get("sql_command")
+    try:
+        result = execute_sql_on_schema(schema_id, sql_command)
+        return jsonify(result), 200
+    except Exception as e:
         return jsonify({"error": str(e)}), 400
