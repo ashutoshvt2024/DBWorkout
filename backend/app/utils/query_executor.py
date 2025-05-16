@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError, ProgrammingError
 from app.core.config import Config
+from flask import jsonify
 import logging
 
 # Database engine
@@ -59,11 +60,12 @@ def validate_query(submitted_query, correct_answer, schema_name):
         if submitted_result == correct_result:
             return {"is_correct": True, "feedback": "Your query is correct!"}
         else:
-            differences = f"Expected: {correct_result}, Got: {submitted_result}"
             return {
                 "is_correct": False,
-                "feedback": f"The results do not match. {differences}",
+                "feedback": "The results do not match. Please review your query.",
             }
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
     except Exception as e:
         logging.error(f"Validation error: {e}")
         return {"is_correct": False, "feedback": "An internal error occurred during validation."}

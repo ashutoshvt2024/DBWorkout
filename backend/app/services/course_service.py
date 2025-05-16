@@ -67,15 +67,19 @@ def get_course_by_id(course_id):
 def update_course(course_id, data):
     session = SessionLocal()
     try:
-        course = session.query(Course).get(course_id)
+        logging.info(f"Attempting to update course with ID: {course_id}")
+        course = session.query(Course).filter_by(course_id=int(course_id)).first()  # Explicitly cast to int
         if not course:
+            logging.error(f"Course with ID {course_id} not found")
             raise ValueError("Course not found")
 
         course.course_name = data.get("course_name", course.course_name)
         session.commit()
+        logging.info(f"Course with ID {course_id} updated successfully")
         return {"course_id": course.course_id, "course_name": course.course_name, "professor_id": course.professor_id}
     except Exception as e:
         session.rollback()
+        logging.error(f"Error updating course: {e}")
         raise e
     finally:
         session.close()
@@ -84,14 +88,19 @@ def update_course(course_id, data):
 def delete_course(course_id):
     session = SessionLocal()
     try:
-        course = session.query(Course).get(course_id)
+        logging.info(f"Attempting to delete course with ID: {course_id}")
+        course = session.query(Course).filter_by(course_id=int(course_id)).first()  # Explicitly cast to int
         if not course:
+            logging.error(f"Course with ID {course_id} not found")
             raise ValueError("Course not found")
 
         session.delete(course)
         session.commit()
+        logging.info(f"Course with ID {course_id} deleted successfully")
+        return True
     except Exception as e:
         session.rollback()
+        logging.error("Error deleting course: {e}")
         raise e
     finally:
         session.close()

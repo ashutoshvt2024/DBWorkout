@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Enum, Date, ForeignKey, Text, Da
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from app.db.session import Base
-
+from sqlalchemy import Boolean
 class Task(Base):
     __tablename__ = "tasks"
 
@@ -17,6 +17,7 @@ class Task(Base):
     tags = Column(String(255), nullable=True)
     deadline = Column(Date, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    published = Column(Boolean, default=False)  # New column to track published status
 
     # Relationships
     course = relationship("Course", back_populates="tasks")
@@ -35,7 +36,8 @@ class Task(Base):
             "difficulty": self.difficulty,
             "tags": self.tags,
             "deadline": str(self.deadline),
-            "created_at": str(self.created_at)
+            "created_at": str(self.created_at),
+            "published": self.published  # Include published status in the dictionary
         }
         if not hide_correct_answer:
             task_dict["correct_answer"] = self.correct_answer

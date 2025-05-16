@@ -1,21 +1,24 @@
 from app.db.models.submission import Submission
 from app.db.models.task import Task
 from app.db.session import SessionLocal
-
+from sqlalchemy.orm import joinedload
+from app.db.models.schema import Schema  # Import the Schema model
 # Submit a task solution
 def create_submission(data):
     session = SessionLocal()
     try:
         assignment_id = data.get("assignment_id")
         submitted_query = data.get("submitted_query")
+        time_taken = data.get("time_taken")
 
-        if not assignment_id or not submitted_query:
-            raise ValueError("assignment_id and submitted_query are required")
+        if not assignment_id or not submitted_query or time_taken is None:
+            raise ValueError("assignment_id, submitted_query, and time_taken are required")
 
         new_submission = Submission(
             assignment_id=assignment_id,
             submitted_query=submitted_query,
             is_correct=False,  # Initially, correctness is not determined
+            time_taken=time_taken,
         )
         session.add(new_submission)
         session.commit()
@@ -25,6 +28,7 @@ def create_submission(data):
             "assignment_id": new_submission.assignment_id,
             "submitted_query": new_submission.submitted_query,
             "is_correct": new_submission.is_correct,
+            "time_taken": new_submission.time_taken,
             "submitted_at": new_submission.submitted_at,
         }
     except Exception as e:
@@ -110,5 +114,37 @@ def update_submission_correctness(submission_id, is_correct):
     except Exception as e:
         session.rollback()
         raise e
+    finally:
+        session.close()
+
+
+
+def get_task_by_id(task_id):
+    session = SessionLocal()
+    try:
+        # Fetch the task and eagerly load the schema relationship
+        task = session.query(Task).options(joinedload(Task.schema)).filter(Task.task_id == task_id).first()
+        if not task:
+            return None
+
+        # Access the schema_name using the relationship
+        schema_name = task.schema.schema_name if task.schema else None
+
+        # Return the task details, including schema_name
+        return {
+            "task_id": task.task_id,
+            "task_title": task.task_title,
+            "task_description": task.task_description,
+            "course_id": task.course_id,
+            "session_id": task.session_id,
+            "schema_id": task.schema_id,
+            "schema_name": schema_name,  # Include schema_name
+            "correct_answer": task.correct_answer,
+            "difficulty": task.difficulty,
+            "tags": task.tags,
+            "deadline": str(task.deadline),
+            "created_at": str(task.created_at),
+            "published": task.published,
+        }
     finally:
         session.close()

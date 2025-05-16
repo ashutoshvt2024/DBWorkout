@@ -182,3 +182,49 @@ def execute_sql_on_schema(schema_id, sql_command):
         raise e
     finally:
         session.close()
+
+def insert_into_table(schema_id, table_name, rows):
+    session = SessionLocal()
+    try:
+        schema = session.query(Schema).get(schema_id)
+        if not schema:
+            raise ValueError("Schema not found")
+
+        schema_name = schema.schema_name
+
+        # Construct the INSERT query dynamically
+        for row in rows:
+            columns = ", ".join(row.keys())
+            values = ", ".join([f":{key}" for key in row.keys()])
+            insert_sql = text(f"INSERT INTO {schema_name}.{table_name} ({columns}) VALUES ({values});")
+            session.execute(insert_sql, row)
+
+        session.commit()
+        return {"message": "Rows inserted successfully", "schema_id": schema_id, "table_name": table_name}
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
+# Fetch data from a table in a schema
+def fetch_table_data(schema_id, table_name):
+    session = SessionLocal()
+    try:
+        schema = session.query(Schema).get(schema_id)
+        if not schema:
+            raise ValueError("Schema not found")
+
+        schema_name = schema.schema_name
+
+        # Fetch all rows from the table
+        fetch_sql = text(f"SELECT * FROM {schema_name}.{table_name};")
+        result = session.execute(fetch_sql).fetchall()
+
+        # Convert rows to a list of dictionaries
+        rows = [dict(row) for row in result]
+
+        return {"schema_id": schema_id, "table_name": table_name, "rows": rows}
+    except Exception as e:
+        raise e
+    finally:
+        session.close()

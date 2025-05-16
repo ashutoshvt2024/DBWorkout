@@ -95,9 +95,9 @@ def update(course_id):
 
     try:
         updated_course = update_course(course_id, data)
-        if not updated_course:
-            return jsonify({"error": "Course not found"}), 404
         return jsonify({"message": "Course updated successfully", "course": updated_course}), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
     except Exception as e:
         logging.error(f"Error updating course: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -112,10 +112,10 @@ def delete(course_id):
         return jsonify({"error": "Unauthorized - Only professors can delete courses"}), 403
 
     try:
-        deleted = delete_course(course_id)
-        if not deleted:
-            return jsonify({"error": "Course not found"}), 404
+        delete_course(course_id)
         return jsonify({"message": "Course deleted successfully"}), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
     except Exception as e:
         logging.error(f"Error deleting course: {str(e)}")
         return jsonify({"error": str(e)}), 500
